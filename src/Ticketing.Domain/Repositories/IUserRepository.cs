@@ -9,4 +9,5 @@ public interface IUserRepository
     Task AddAsync(AppUser user);
     void Update(AppUser user);
     Task<bool> ExistsAsync(string email);
+    Task<List<AppUser>> GetAllAsync();
 }

@@ -28,4 +28,7 @@ public class UserRepository : IUserRepository
 
     public void Update(AppUser user)
         => _context.Users.Update(user);
+
+    public async Task<List<AppUser>> GetAllAsync()
+        => await _context.Users.ToListAsync();
 }
