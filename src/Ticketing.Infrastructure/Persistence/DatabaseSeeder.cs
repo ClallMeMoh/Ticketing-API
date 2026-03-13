@@ -35,19 +35,50 @@ public class DatabaseSeeder
                 await _context.SaveChangesAsync();
                 _logger.LogInformation("Reset password for seed admin user: {Email}", AdminEmail);
             }
+        }
+        else
+        {
+            var admin = new AppUser(
+                "System Admin",
+                AdminEmail,
+                _passwordHasher.Hash(AdminPassword),
+                UserRole.Admin);
 
-            return;
+            await _context.Users.AddAsync(admin);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Seeded default admin user: {Email}", AdminEmail);
         }
 
-        var admin = new AppUser(
-            "System Admin",
-            AdminEmail,
-            _passwordHasher.Hash(AdminPassword),
-            UserRole.Admin);
+        await SeedAgentProfilesAsync();
+    }
 
-        await _context.Users.AddAsync(admin);
+    private async Task SeedAgentProfilesAsync()
+    {
+        if (await _context.AgentProfiles.AnyAsync())
+            return;
+
+        var agents = new[]
+        {
+            ("Alice Chen", "alice@test.com", 5),
+            ("Bob Patel", "bob@test.com", 8),
+            ("Carol Diaz", "carol@test.com", 3),
+        };
+
+        foreach (var (name, email, capacity) in agents)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user is null)
+            {
+                user = new AppUser(name, email, _passwordHasher.Hash("Agent123!"), UserRole.Agent);
+                await _context.Users.AddAsync(user);
+                await _context.SaveChangesAsync();
+            }
+
+            await _context.AgentProfiles.AddAsync(new AgentProfile(user.Id, capacity));
+        }
+
         await _context.SaveChangesAsync();
-
-        _logger.LogInformation("Seeded default admin user: {Email}", AdminEmail);
+        _logger.LogInformation("Seeded {Count} agent profiles.", agents.Length);
     }
 }
