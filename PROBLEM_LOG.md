@@ -64,3 +64,33 @@
 - **Cause:** Query handlers fetched full `Ticket` and `Comment` entities with `.Include()` for navigation properties, then mapped them to DTOs in memory. This loaded unnecessary columns and materialized full entity graphs on read paths.
 - **Fix:** Created `ITicketReadService` and `ICommentReadService` interfaces in the Application layer with implementations in Infrastructure that use `.Select()` to project directly to DTOs at the database level. Removed paged read methods from write-side repository interfaces. Deleted unused mapping extension files (`TicketMappingExtensions`, `CommentMappingExtensions`). Also removed unnecessary `Include(CreatedByUser/AssignedToUser)` from write-side `TicketRepository.GetByIdAsync()` since command handlers only need the entity for mutations.
 - **Prevention:** On read paths, use `.Select()` projections to return only the fields needed. Separate read and write concerns: repositories handle domain entity persistence, read services handle DTO projections.
+
+## Issue: MassTransit v9 license requirement blocked runtime startup
+- **Cause:** `MassTransit.RabbitMQ` v9 requires a runtime license key (`MT_LICENSE`/`MT_LICENSE_PATH`). Local/dev environment had no license configured, causing API host startup failure.
+- **Fix:** Pinned MassTransit packages to v8.5.1 for API/Worker runtime compatibility in this project.
+- **Prevention:** Verify runtime licensing requirements before package major-version upgrades, especially for messaging/infrastructure dependencies.
+
+## Issue: RabbitMQ host port collision prevented compose startup
+- **Cause:** Host port `5672` was already allocated by another local container stack.
+- **Fix:** Remapped project RabbitMQ ports to `5673` (AMQP) and `15673` (management UI) in `docker-compose.yml`.
+- **Prevention:** Reserve per-project port ranges or check occupied ports before finalizing compose mappings.
+
+## Issue: Worker container failed because required services were missing
+- **Cause:** Worker DI path did not register some Application-level dependencies (`ICurrentUserService`, `IPasswordHasher`, `IJwtTokenGenerator`), and worker runtime image initially lacked required ASP.NET shared framework.
+- **Fix:** Switched worker base image to `mcr.microsoft.com/dotnet/aspnet:10.0` and added worker-safe service implementations/registrations.
+- **Prevention:** When reusing Application handlers in non-API hosts, validate startup with `ValidateOnBuild` mindset and provide host-specific infrastructure stubs/adapters.
+
+## Issue: Ticket-created event published to wrong topology
+- **Cause:** API publisher sent directly to a custom exchange URI while worker consumed default message topology queue, so events were not delivered to consumer.
+- **Fix:** Changed publisher to use `IPublishEndpoint.Publish(TicketCreatedEvent)` so MassTransit topology wiring matches consumer bindings.
+- **Prevention:** For event-style communication, prefer `Publish` over direct `Send` unless queue/exchange ownership is explicitly managed end-to-end.
+
+## Issue: EF Core could not translate active-load projection query
+- **Cause:** Complex projection in `GetAssignableAgentsWithActiveLoadAsync()` generated a LINQ expression EF Core could not translate.
+- **Fix:** Reworked to two-step query/materialization: fetch candidate agents, fetch active tickets for those agents, aggregate weighted load in memory, then map snapshots.
+- **Prevention:** Keep EF projections translation-friendly; split query and aggregation when expression complexity grows.
+
+## Issue: Swagger UI showed "Unable to render this definition" in Docker dev flow
+- **Cause:** HTTPS redirection in development container led to inconsistent UI behavior while service was exposed over HTTP only.
+- **Fix:** Applied `UseHttpsRedirection()` only outside Development and verified `/swagger/v1/swagger.json` returns valid `openapi: "3.0.4"`.
+- **Prevention:** In containerized local development, align protocol behavior with actual exposed endpoints and avoid forced HTTPS unless certificates/ports are configured.

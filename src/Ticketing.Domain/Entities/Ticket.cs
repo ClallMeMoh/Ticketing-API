@@ -12,6 +12,7 @@ public class Ticket : AuditableEntity
     public TicketPriority Priority { get; private set; }
     public Guid CreatedByUserId { get; private set; }
     public Guid? AssignedToUserId { get; private set; }
+    public byte[] RowVersion { get; private set; } = default!;
 
     public AppUser CreatedByUser { get; private set; } = default!;
     public AppUser? AssignedToUser { get; private set; }
@@ -45,13 +46,16 @@ public class Ticket : AuditableEntity
         AssignedToUserId = agentId;
 
         if (Status == TicketStatus.Open)
-            Status = TicketStatus.InProgress;
+            Status = TicketStatus.Assigned;
     }
 
     public void ChangeStatus(TicketStatus newStatus)
     {
         if (Status == TicketStatus.Closed && newStatus != TicketStatus.Open)
             throw new DomainException("A closed ticket can only be reopened.");
+
+        if (newStatus == TicketStatus.Assigned && AssignedToUserId is null)
+            throw new DomainException("Cannot move to Assigned without an assigned agent.");
 
         if (newStatus == TicketStatus.InProgress && AssignedToUserId is null)
             throw new DomainException("Cannot move to InProgress without an assigned agent.");

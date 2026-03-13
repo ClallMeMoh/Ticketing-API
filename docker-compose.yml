@@ -12,8 +12,34 @@ services:
       - Jwt__Issuer=Ticketing.API
       - Jwt__Audience=Ticketing.Client
       - Jwt__ExpiresInMinutes=60
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__VirtualHost=/
+      - RabbitMq__Username=guest
+      - RabbitMq__Password=guest
     depends_on:
       sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: src/Ticketing.Worker/Dockerfile
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=TicketingDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=true;
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__VirtualHost=/
+      - RabbitMq__Username=guest
+      - RabbitMq__Password=guest
+      - Worker__ReconciliationIntervalSeconds=60
+      - Worker__ReconciliationTicketAgeThresholdSeconds=60
+      - Worker__ReconciliationBatchSize=50
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   sqlserver:
@@ -31,6 +57,18 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
 volumes:
   sqlserver-data:

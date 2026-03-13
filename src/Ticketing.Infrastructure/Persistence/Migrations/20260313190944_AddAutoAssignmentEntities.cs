@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -11,6 +11,8 @@ namespace Ticketing.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql("UPDATE Tickets SET Status = Status + 1 WHERE Status >= 1");
+
             migrationBuilder.AddColumn<byte[]>(
                 name: "RowVersion",
                 table: "Tickets",
@@ -91,6 +93,8 @@ namespace Ticketing.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql("UPDATE Tickets SET Status = Status - 1 WHERE Status >= 2");
+
             migrationBuilder.DropTable(
                 name: "AgentProfiles");
 

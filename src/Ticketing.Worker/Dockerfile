@@ -1,6 +1,5 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
-EXPOSE 8080
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
@@ -16,9 +15,9 @@ COPY tests/Ticketing.Tests/Ticketing.Tests.csproj tests/Ticketing.Tests/
 RUN dotnet restore
 
 COPY . .
-RUN dotnet publish src/Ticketing.API/Ticketing.API.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish src/Ticketing.Worker/Ticketing.Worker.csproj -c Release -o /app/publish --no-restore
 
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "Ticketing.API.dll"]
+ENTRYPOINT ["dotnet", "Ticketing.Worker.dll"]

@@ -6,6 +6,7 @@ public interface ITicketRepository
 {
     Task<Ticket?> GetByIdAsync(Guid id);
     Task<Ticket?> GetByIdWithCommentsAsync(Guid id);
+    Task<List<Guid>> GetOpenUnassignedOlderThanAsync(DateTime olderThanUtc, int take);
     Task AddAsync(Ticket ticket);
     void Update(Ticket ticket);
     void Delete(Ticket ticket);

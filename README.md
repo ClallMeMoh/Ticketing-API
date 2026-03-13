@@ -1,6 +1,6 @@
 # Ticketing API
 
-A ticket management system API built with .NET 10, following DDD architecture with CQRS.
+A ticket management system API built with .NET 10, following DDD architecture with CQRS and event-driven auto-assignment.
 
 ## What It Does
 
@@ -9,17 +9,20 @@ A ticket management system API built with .NET 10, following DDD architecture wi
 - Agents handle assigned tickets
 - Admins manage users, assign tickets, and perform privileged actions
 - Tickets support status changes, comments, pagination, and filtering
+- New tickets are auto-assigned by a worker service through RabbitMQ
+- Admins can manage agent availability/capacity and view weighted load
 
 ## Tech Stack
 
 - .NET 10 / ASP.NET Core
 - Entity Framework Core 10 with SQL Server
 - MediatR (CQRS)
+- MassTransit + RabbitMQ
 - FluentValidation
 - JWT Bearer Authentication
 - BCrypt password hashing
 - Swagger / Swashbuckle
-- Docker + Docker Compose
+- Docker + Docker Compose (API + Worker + SQL Server + RabbitMQ)
 - xUnit + NSubstitute
 
 ## Architecture
@@ -28,8 +31,9 @@ A ticket management system API built with .NET 10, following DDD architecture wi
 src/
   Ticketing.Domain          -- Entities, enums, business rules, repository interfaces
   Ticketing.Application     -- Commands, queries, handlers, DTOs, validators, read service interfaces
-  Ticketing.Infrastructure  -- EF Core, repositories, read services, JWT, password hashing
+  Ticketing.Infrastructure  -- EF Core, repositories, read services, JWT, password hashing, messaging
   Ticketing.API             -- Controllers, middleware, Swagger, startup config
+  Ticketing.Worker          -- RabbitMQ consumer and reconciliation background service
 tests/
   Ticketing.Tests           -- Unit tests for domain rules and handlers
 ```
@@ -43,6 +47,39 @@ Key patterns:
 - Sequential GUIDs (`NEWSEQUENTIALID()`) for SQL Server index performance
 - `TimeProvider` abstraction for testable audit fields
 - Database seeder for bootstrapping admin user on first startup
+- Event-driven assignment pipeline (`TicketCreatedEvent` -> worker consumer -> auto-assignment command)
+- Reconciliation sweep to recover missed assignment events
+
+## New Auto-Assignment Features
+
+- `Assigned` ticket status added between `Open` and `InProgress`
+- `AgentProfiles` table for availability, capacity, and efficiency
+- `AssignmentHistories` table for manual/auto assignment audit trails
+- Concurrency protection on tickets with `RowVersion`
+- Weighted load-balancing algorithm:
+  - Priority weights: Low=1, Medium=2, High=3, Critical=5
+  - Ranking: projected load ratio -> least recently assigned -> higher efficiency -> deterministic user id
+- Admin agent profile APIs:
+  - `GET /api/agents`
+  - `GET /api/agents/{userId}`
+  - `POST /api/agents`
+  - `PUT /api/agents/{userId}`
+
+## How Auto-Assignment Works (Simple)
+
+1. A user creates a ticket.
+2. The API saves the ticket, then publishes a `TicketCreatedEvent`.
+3. RabbitMQ carries that event to the worker service.
+4. The worker receives the event and runs the auto-assignment command.
+5. The algorithm picks the best available agent using:
+   - current active load
+   - agent capacity (`MaxConcurrentTickets`)
+   - ticket priority weight (Low=1, Medium=2, High=3, Critical=5)
+6. The ticket is assigned and its status moves to `Assigned`.
+7. Assignment history is saved for audit.
+
+Safety net:
+- A reconciliation background job periodically checks for old unassigned open tickets and retries assignment.
 
 ## Default Admin
 
@@ -62,7 +99,7 @@ Prerequisites: .NET 10 SDK, SQL Server
    ```
    dotnet run --project src/Ticketing.API
    ```
-3. Open Swagger at `https://localhost:<port>/swagger`
+3. Open Swagger at `http://localhost:<port>/swagger`
 
 The database and migrations are applied automatically on startup.
 
@@ -71,12 +108,18 @@ The database and migrations are applied automatically on startup.
 Prerequisites: Docker and Docker Compose
 
 ```
-docker-compose up --build
+docker compose up --build
 ```
 
-This starts the API on port 5000 and SQL Server on port 1433. The database is created automatically on startup.
+This starts API, Worker, SQL Server, and RabbitMQ in one stack.
 
-Swagger: `http://localhost:5000/swagger`
+- API: `http://localhost:5000`
+- Swagger: `http://localhost:5000/swagger`
+- SQL Server: `localhost:1433`
+- RabbitMQ AMQP: `localhost:5673`
+- RabbitMQ Management UI: `http://localhost:15673`
+
+The database and migrations are applied automatically on startup.
 
 ## API Endpoints
 
@@ -99,6 +142,12 @@ Swagger: `http://localhost:5000/swagger`
 - `POST /api/tickets/{ticketId}/comments` -- Add a comment
 - `GET /api/tickets/{ticketId}/comments` -- Get comments for a ticket (paginated)
 
+### Agent Profiles (Admin)
+- `GET /api/agents` -- List agent profiles with load metrics
+- `GET /api/agents/{userId}` -- Get one profile with load metrics
+- `POST /api/agents` -- Create agent profile for agent user
+- `PUT /api/agents/{userId}` -- Update availability/capacity/efficiency
+
 ## Error Handling
 
 The API uses structured error responses with semantically correct HTTP status codes:
@@ -117,4 +166,14 @@ The API uses structured error responses with semantically correct HTTP status co
 dotnet test
 ```
 
-25 unit tests covering domain business rules, command handlers, and validators.
+Unit tests cover domain rules, CQRS handlers, and auto-assignment paths.
+
+## Troubleshooting
+
+- Swagger says "Unable to render this definition":
+  - Use `http://localhost:5000/swagger/index.html` (not HTTPS in local Docker)
+  - Hard refresh (`Ctrl+F5`) if browser cache is stale
+- RabbitMQ port conflict on `5672`:
+  - This project maps RabbitMQ to `5673` / `15673` by default
+- Local API-only run without RabbitMQ license/setup:
+  - Set `Messaging__DisableMassTransit=true` to use no-op message publishing for quick local endpoint testing
