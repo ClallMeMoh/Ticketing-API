@@ -26,6 +26,8 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ITicketRepository, TicketRepository>();
         services.AddScoped<ICommentRepository, CommentRepository>();
+        services.AddScoped<IAgentProfileRepository, AgentProfileRepository>();
+        services.AddScoped<IAssignmentHistoryRepository, AssignmentHistoryRepository>();
         services.AddScoped<ITicketReadService, TicketReadService>();
         services.AddScoped<ICommentReadService, CommentReadService>();
         services.AddScoped<DatabaseSeeder>();
