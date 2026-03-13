@@ -42,5 +42,7 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
         builder.Metadata
             .FindNavigation(nameof(Ticket.Comments))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Property(t => t.RowVersion).IsRowVersion();
     }
 }

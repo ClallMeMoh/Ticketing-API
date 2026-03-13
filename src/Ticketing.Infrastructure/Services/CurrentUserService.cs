@@ -25,4 +25,8 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICur
     public string Role =>
         _httpContextAccessor.HttpContext?.User
             .FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+
+    public string? Email =>
+        _httpContextAccessor.HttpContext?.User
+            .FindFirstValue(ClaimTypes.Email);
 }

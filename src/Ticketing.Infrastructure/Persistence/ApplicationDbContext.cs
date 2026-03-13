@@ -12,6 +12,8 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<AppUser> Users => Set<AppUser>();
     public DbSet<Ticket> Tickets => Set<Ticket>();
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<AgentProfile> AgentProfiles => Set<AgentProfile>();
+    public DbSet<TicketAssignmentHistory> AssignmentHistories => Set<TicketAssignmentHistory>();
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, TimeProvider timeProvider)
         : base(options)
