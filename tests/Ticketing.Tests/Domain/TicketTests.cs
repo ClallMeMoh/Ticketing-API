@@ -38,7 +38,7 @@ public class TicketTests
     }
 
     [Fact]
-    public void AssignTo_WhenOpen_SetsInProgress()
+    public void AssignTo_WhenOpen_SetsAssigned()
     {
         var ticket = CreateTicket();
         var agentId = Guid.NewGuid();
@@ -46,11 +46,11 @@ public class TicketTests
         ticket.AssignTo(agentId);
 
         Assert.Equal(agentId, ticket.AssignedToUserId);
-        Assert.Equal(TicketStatus.InProgress, ticket.Status);
+        Assert.Equal(TicketStatus.Assigned, ticket.Status);
     }
 
     [Fact]
-    public void AssignTo_WhenAlreadyInProgress_KeepsStatus()
+    public void AssignTo_WhenAlreadyAssigned_KeepsStatus()
     {
         var ticket = CreateTicket();
         ticket.AssignTo(Guid.NewGuid());
@@ -59,7 +59,7 @@ public class TicketTests
         ticket.AssignTo(newAgentId);
 
         Assert.Equal(newAgentId, ticket.AssignedToUserId);
-        Assert.Equal(TicketStatus.InProgress, ticket.Status);
+        Assert.Equal(TicketStatus.Assigned, ticket.Status);
     }
 
     [Fact]
@@ -131,5 +131,41 @@ public class TicketTests
         var ticket = CreateTicket();
 
         Assert.Throws<DomainException>(() => ticket.Reopen());
+    }
+
+    [Fact]
+    public void AssignTo_WhenInProgress_KeepsInProgressStatus()
+    {
+        var ticket = CreateTicket();
+        ticket.AssignTo(Guid.NewGuid());
+        ticket.ChangeStatus(TicketStatus.InProgress);
+
+        var newAgentId = Guid.NewGuid();
+        ticket.AssignTo(newAgentId);
+
+        Assert.Equal(TicketStatus.InProgress, ticket.Status);
+        Assert.Equal(newAgentId, ticket.AssignedToUserId);
+    }
+
+    [Fact]
+    public void ChangeStatus_WhenClosed_CannotTransitionToAssigned()
+    {
+        var ticket = CreateTicket();
+        ticket.AssignTo(Guid.NewGuid());
+        ticket.Close();
+
+        Assert.Throws<DomainException>(() => ticket.ChangeStatus(TicketStatus.Assigned));
+    }
+
+    [Fact]
+    public void ChangeStatus_WhenResolved_CanTransitionToAssigned()
+    {
+        var ticket = CreateTicket();
+        ticket.AssignTo(Guid.NewGuid());
+        ticket.ChangeStatus(TicketStatus.Resolved);
+
+        ticket.ChangeStatus(TicketStatus.Assigned);
+
+        Assert.Equal(TicketStatus.Assigned, ticket.Status);
     }
 }
