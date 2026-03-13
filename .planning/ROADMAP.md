@@ -12,7 +12,7 @@ This milestone extends the existing Ticket Management System with an asynchronou
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Domain and Persistence Foundation** - Extend the domain with AgentProfile, TicketAssignmentHistory, the new Assigned status, and the EF migration
+- [x] **Phase 1: Domain and Persistence Foundation** - Extend the domain with AgentProfile, TicketAssignmentHistory, the new Assigned status, and the EF migration (completed 2026-03-13)
 - [ ] **Phase 2: Assignment Algorithm** - Implement AutoAssignTicketCommand and the weighted ranking handler in the Application layer
 - [ ] **Phase 3: Event Publishing** - Publish TicketCreatedEvent from CreateTicketCommandHandler after successful database commit
 - [ ] **Phase 4: Worker Service** - Create Ticketing.Worker, wire the MassTransit consumer and reconciliation sweep
@@ -100,7 +100,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Domain and Persistence Foundation | 1/2 | In progress | - |
+| 1. Domain and Persistence Foundation | 2/2 | Complete   | 2026-03-13 |
 | 2. Assignment Algorithm | 0/TBD | Not started | - |
 | 3. Event Publishing | 0/TBD | Not started | - |
 | 4. Worker Service | 0/TBD | Not started | - |

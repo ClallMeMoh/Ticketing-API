@@ -11,9 +11,9 @@
 - [x] **DOM-02**: `Ticket.AssignTo()` sets status to `Assigned` instead of `InProgress`
 - [x] **DOM-03**: Status transitions handle `Assigned` correctly (Assigned → InProgress, Assigned → Open, Closed cannot go to Assigned)
 - [x] **DOM-04**: AgentProfile entity tracks `IsAvailable`, `MaxConcurrentTickets`, `LastAssignedAt`, `EfficiencyScore` per agent
-- [ ] **DOM-05**: TicketAssignmentHistory entity logs every assignment with type (Manual/Auto), reason, and timestamp
+- [x] **DOM-05**: TicketAssignmentHistory entity logs every assignment with type (Manual/Auto), reason, and timestamp
 - [x] **DOM-06**: RowVersion concurrency token on Ticket is configured in EF Core (fix missing `.IsRowVersion()`)
-- [ ] **DOM-07**: EF migration includes data migration shifting existing status values for new `Assigned` enum position
+- [x] **DOM-07**: EF migration includes data migration shifting existing status values for new `Assigned` enum position
 
 ### Messaging
 
@@ -92,9 +92,9 @@
 | DOM-02 | Phase 1 | Pending |
 | DOM-03 | Phase 1 | Pending |
 | DOM-04 | Phase 1 | Pending |
-| DOM-05 | Phase 1 | Pending |
+| DOM-05 | Phase 1 | Complete |
 | DOM-06 | Phase 1 | Pending |
-| DOM-07 | Phase 1 | Pending |
+| DOM-07 | Phase 1 | Complete |
 | ALG-01 | Phase 2 | Pending |
 | ALG-02 | Phase 2 | Pending |
 | ALG-03 | Phase 2 | Pending |

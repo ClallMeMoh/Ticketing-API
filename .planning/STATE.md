@@ -3,11 +3,27 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-03-13T19:11:27.675Z"
+last_activity: 2026-03-13 — Completed Phase 1 Plan 01 (domain fixes, EF configurations, domain tests)
+progress:
+  total_phases: 6
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
+  percent: 100
+---
+
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: in-progress
 stopped_at: Completed 01-01-PLAN.md
 last_updated: "2026-03-13T19:04:46Z"
 last_activity: 2026-03-13 — Completed Phase 1 Plan 01 (domain fixes, EF configurations, domain tests)
 progress:
-  total_phases: 6
+  [██████████] 100%
   completed_phases: 0
   total_plans: 1
   completed_plans: 1
@@ -50,6 +66,7 @@ Progress: [█░░░░░░░░░] 5%
 - Trend: baseline
 
 *Updated after each plan completion*
+| Phase 01-domain-and-persistence-foundation P02 | 3 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -64,6 +81,8 @@ Recent decisions affecting current work:
 - [01-01]: AgentProfile extends AuditableEntity — EF audit interceptor populates CreatedAt/UpdatedAt automatically
 - [01-01]: Email on ICurrentUserService is string? (nullable) — absence of email claim is semantically different from empty string
 - [01-01]: AgentProfile one-to-one FK uses Cascade delete — deleting an AppUser removes their agent profile
+- [Phase 01-02]: DatabaseSeeder restructured from early-return to always-run-agent-seeding pattern — the original early return would have skipped agent profile seeding on app restarts
+- [Phase 01-02]: AssignTicketCommandHandler writes TicketAssignmentHistory and ticket.AssignTo() atomically in same SaveChangesAsync call
 
 ### Pending Todos
 
@@ -78,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T19:04:46Z
-Stopped at: Completed 01-01-PLAN.md
-Resume file: .planning/phases/01-domain-and-persistence-foundation/01-01-SUMMARY.md
+Last session: 2026-03-13T19:11:27.673Z
+Stopped at: Completed 01-02-PLAN.md
+Resume file: None
