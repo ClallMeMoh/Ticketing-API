@@ -43,6 +43,9 @@ Desktop.ini
 Claude.md
 TASKS.md
 
+# GSD planning (tracked for project state continuity)
+# .planning/
+
 # Test scripts
 test_api.ps1
 
